@@ -1,16 +1,22 @@
+﻿# Python
 __pycache__/
 *.py[cod]
+.venv/
+venv/
+# Environment variables and secrets
 .env
 .env.*
 !.env.example
+# Node.js
 node_modules/
+# Generated build output
 cdk.out/
+infra/dist/
+dist/
+build/
 coverage/
+# Local-only backup
+frontend/styles.backup.css
+# Operating system files
 .DS_Store
 Thumbs.db
-
-# Generated CDK output
-infra/dist/
-
-# Local CSS backup
-frontend/styles.backup.css

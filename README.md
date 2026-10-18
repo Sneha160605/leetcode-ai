@@ -1,4 +1,4 @@
-# Socratic — LeetCode Clone with AI Hints
+﻿# Socratic â€” LeetCode Clone with AI Hints
 
 A polished coding-practice workspace for learning problem-solving through progressive hints, code submissions, and complexity feedback. The project includes a static frontend, AWS Lambda API, queue-based judge workers, sandbox harnesses, AWS CDK infrastructure, and a GitHub Actions pipeline.
 
@@ -11,13 +11,13 @@ A polished coding-practice workspace for learning problem-solving through progre
 - Made the sandbox module importable on Windows for development/testing while ensuring submissions are never executed on the Windows host. Real sandbox execution belongs in the isolated Linux worker container.
 - Documented the local and AWS workflows more clearly.
 
-## Quick start — Windows
+## Quick start â€” Windows
 
 You do not need AWS credentials to preview the interface.
 
 1. Extract the ZIP file.
 2. Open the extracted `leetcode-ai` folder in VS Code.
-3. Open **Terminal → New Terminal**.
+3. Open **Terminal â†’ New Terminal**.
 4. Run:
 
    ```powershell
@@ -86,11 +86,15 @@ Follow the existing deployment workflow in `infra/` and `.github/workflows/ci.ym
 
 ## Main directories
 
-- `frontend/` — responsive web app and configuration
-- `backend/api/` — Lambda REST API handler
-- `backend/judge/` — judge, sandbox and worker processing
-- `backend/shared/` — AI integration, problems and persistence layer
-- `infra/` — AWS CDK stacks
-- `.github/workflows/` — CI/CD pipeline
-- `loadtest/` — queue simulation and k6 load test
-- `scripts/` — staged rollout helpers
+- `frontend/` â€” responsive web app and configuration
+- `backend/api/` â€” Lambda REST API handler
+- `backend/judge/` â€” judge, sandbox and worker processing
+- `backend/shared/` â€” AI integration, problems and persistence layer
+- `infra/` â€” AWS CDK stacks
+- `.github/workflows/` â€” CI/CD pipeline
+- `loadtest/` â€” queue simulation and k6 load test
+- `scripts/` â€” staged rollout helpers
+
+## Author
+
+Sneha Namoshi
