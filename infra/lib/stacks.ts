@@ -81,7 +81,7 @@ export class PlatformStack extends cdk.Stack {
 
     // ------------------------------------------------------------ network: isolated, no internet route at all
     const vpc = new ec2.Vpc(this, 'Vpc', {
-      maxAzs: 2,
+      availabilityZones: ['us-east-1a', 'us-east-1b'],
       natGateways: 0,
       subnetConfiguration: [{ name: 'sandbox', subnetType: ec2.SubnetType.PRIVATE_ISOLATED, cidrMask: 24 }],
     });
