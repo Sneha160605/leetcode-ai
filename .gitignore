@@ -1,0 +1,16 @@
+__pycache__/
+*.py[cod]
+.env
+.env.*
+!.env.example
+node_modules/
+cdk.out/
+coverage/
+.DS_Store
+Thumbs.db
+
+# Generated CDK output
+infra/dist/
+
+# Local CSS backup
+frontend/styles.backup.css

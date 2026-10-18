@@ -1,0 +1,139 @@
+
+/* ===== INTERNCONNECT LIGHT THEME ===== */
+
+:root {
+  color-scheme: light !important;
+  --bg: #ffffff !important;
+  --sidebar: #ffffff !important;
+  --panel: #ffffff !important;
+  --panel2: #f7f9f7 !important;
+  --panel3: #eef3ef !important;
+  --line: #e4ebe5 !important;
+  --line2: #cfd9d1 !important;
+  --ink: #151c18 !important;
+  --muted: #59675e !important;
+  --muted2: #78857c !important;
+  --teal: #00603d !important;
+  --teal2: #00784a !important;
+  --violet: #ff4b0b !important;
+  --green: #00603d !important;
+}
+
+html, body {
+  background: #fff !important;
+  color: #151c18 !important;
+}
+
+.app-shell, .main, .main-content, main,
+.content, .workspace, .page-content {
+  background: #fff !important;
+  color: #151c18 !important;
+}
+
+.sidebar {
+  background: #fff !important;
+  color: #151c18 !important;
+  border-right: 1px solid #e4ebe5 !important;
+  box-shadow: none !important;
+}
+
+.sidebar * {
+  color: #151c18;
+}
+
+.side-nav a {
+  color: #46554a !important;
+}
+
+.side-nav a.active {
+  background: #edf5ef !important;
+  color: #00603d !important;
+  border-left: 3px solid #ff4b0b !important;
+}
+
+.topbar {
+  background: #fff !important;
+  color: #151c18 !important;
+  border-bottom: 1px solid #e4ebe5 !important;
+}
+
+.hero, .hero-card, .welcome-card {
+  background: #f7f9f7 !important;
+  border: 1px solid #e4ebe5 !important;
+  box-shadow: none !important;
+  color: #151c18 !important;
+}
+
+.hero h1, .hero h2, .hero p,
+.hero-card h1, .hero-card p,
+.welcome-card h1, .welcome-card p {
+  color: #151c18 !important;
+}
+
+.hero h1 span, .hero .accent {
+  color: #00603d !important;
+}
+
+.card, .stat-card, .panel, .problem-card,
+.result-card, .complexity-box, .chart-card {
+  background: #fff !important;
+  color: #151c18 !important;
+  border: 1px solid #e4ebe5 !important;
+  box-shadow: 0 4px 16px rgba(21,28,24,.04) !important;
+}
+
+.card *, .stat-card *, .panel *,
+.problem-card *, .result-card * {
+  border-color: #e4ebe5;
+}
+
+button.primary, .btn-primary, .primary-button,
+button[type="submit"] {
+  background: #00603d !important;
+  color: #fff !important;
+  border: 1px solid #00603d !important;
+}
+
+button.primary:hover, .btn-primary:hover,
+.primary-button:hover {
+  background: #004d31 !important;
+}
+
+button.secondary, .btn-secondary, .button-secondary {
+  background: #fff !important;
+  color: #151c18 !important;
+  border: 1px solid #d6e0d8 !important;
+}
+
+input, textarea, select {
+  background: #fff !important;
+  color: #151c18 !important;
+  border: 1px solid #d6e0d8 !important;
+}
+
+a { color: #00603d; }
+a:hover { color: #ff4b0b !important; }
+
+.brand-mark, .modal-mark {
+  background: #ff4b0b !important;
+  color: #fff !important;
+}
+
+.mode-badge {
+  background: #edf5ef !important;
+  color: #00603d !important;
+}
+
+/* Keep the code editor dark */
+.code-editor, .editor,
+.code-editor textarea, .editor textarea,
+pre, pre code {
+  background: #17211b !important;
+  color: #e7f0e9 !important;
+}
+
+@media (max-width: 800px) {
+  .sidebar, .topbar {
+    background: #fff !important;
+  }
+}

@@ -1,0 +1,219 @@
+
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION: us-east-1
+  LANGS: python javascript
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Run backend unit tests
+        run: python -m unittest discover -s tests -t .
+        working-directory: backend
+
+      - name: Python judge self-test
+        run: python -m judge.selftest
+        working-directory: backend
+
+      - name: JavaScript judge self-test
+        run: python -m judge.selftest
+        working-directory: backend
+        env:
+          LANGUAGE: javascript
+
+      - name: Install CDK dependencies and synthesize
+        run: npm install && npx cdk synth --quiet
+        working-directory: infra
+        env:
+          CDK_DEFAULT_ACCOUNT: "000000000000"
+          CDK_DEFAULT_REGION: us-east-1
+
+  build:
+    needs: test
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        lang: [python, javascript]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Build judge image
+        uses: docker/build-push-action@v6
+        with:
+          context: backend
+          build-args: |
+            LANGUAGE=${{ matrix.lang }}
+            IMAGE_TAG=${{ github.sha }}
+          platforms: linux/amd64
+          load: true
+          tags: judge-${{ matrix.lang }}:ci
+          cache-from: type=gha,scope=${{ matrix.lang }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.lang }}
+
+      - name: Scan image with Trivy
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: judge-${{ matrix.lang }}:ci
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          exit-code: "1"
+
+      - name: Self-test image with restricted container settings
+        run: |
+          docker run --rm \
+            --read-only \
+            --tmpfs /sandbox:rw,exec,mode=755 \
+            --tmpfs /tmp \
+            --network none \
+            --cap-drop ALL \
+            --cap-add SETUID \
+            --cap-add SETGID \
+            --cap-add KILL \
+            --cap-add CHOWN \
+            judge-${{ matrix.lang }}:ci \
+            python3 -m judge.selftest
+
+      - name: Save image
+        run: docker save judge-${{ matrix.lang }}:ci | gzip > image-${{ matrix.lang }}.tgz
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: image-${{ matrix.lang }}
+          path: image-${{ matrix.lang }}.tgz
+          retention-days: 1
+
+  deploy:
+    # Keep deployment disabled until AWS permissions and resources are verified.
+    if: github.ref == 'refs/heads/main' && vars.ENABLE_STAGING_DEPLOY == 'true'
+    needs: build
+    runs-on: ubuntu-latest
+    environment: staging
+    concurrency: deploy-staging
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Install CDK dependencies
+        run: npm install
+        working-directory: infra
+
+      - name: Ensure ECR repositories exist
+        run: npx cdk deploy LeetAI-Registry --require-approval never
+        working-directory: infra
+
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: image-*
+          path: images
+
+      - uses: aws-actions/amazon-ecr-login@v2
+        id: ecr
+
+      - name: Push images and check scan findings
+        run: |
+          set -euo pipefail
+
+          for l in $LANGS; do
+            gunzip -c "images/image-$l/image-$l.tgz" | docker load
+
+            ref="${{ steps.ecr.outputs.registry }}/leetai/judge-$l:${{ github.sha }}"
+            docker tag "judge-$l:ci" "$ref"
+            docker push "$ref"
+
+            aws ecr wait image-scan-complete \
+              --repository-name "leetai/judge-$l" \
+              --image-id "imageTag=${{ github.sha }}"
+
+            sev=$(aws ecr describe-image-scan-findings \
+              --repository-name "leetai/judge-$l" \
+              --image-id "imageTag=${{ github.sha }}" \
+              --query 'imageScanFindings.findingSeverityCounts' \
+              --output json)
+
+            echo "$l scan findings: $sev"
+
+            critical=$(echo "$sev" | jq '(.CRITICAL // 0)')
+            high=$(echo "$sev" | jq '(.HIGH // 0)')
+
+            if [ "$critical" -gt 0 ] || [ "$high" -gt 0 ]; then
+              echo "HIGH or CRITICAL findings detected; stopping deployment."
+              exit 1
+            fi
+          done
+
+      - name: Staged rollout
+        run: |
+          set -euo pipefail
+
+          prev=$(aws ssm get-parameter \
+            --name /leetai/stable-tag \
+            --query Parameter.Value \
+            --output text 2>/dev/null || true)
+
+          scripts/rollout.sh "${{ github.sha }}" "$prev" 300
+
+          aws ssm put-parameter \
+            --name /leetai/stable-tag \
+            --type String \
+            --overwrite \
+            --value "${{ github.sha }}"
+
+      - name: Load test execution queue and verify autoscaling
+        run: |
+          set -euo pipefail
+
+          curl -fsSL \
+            https://github.com/grafana/k6/releases/download/v0.54.0/k6-v0.54.0-linux-amd64.tar.gz \
+            | tar xz
+
+          out() {
+            aws cloudformation describe-stacks \
+              --stack-name LeetAI-Platform \
+              --query "Stacks[0].Outputs[?OutputKey=='$1'].OutputValue" \
+              --output text
+          }
+
+          ./k6-v0.54.0-linux-amd64/k6 run loadtest/k6-submit.js \
+            -e API="$(out ApiUrl | sed 's:/$::')" \
+            -e CLIENT_ID="$(out ClientId)" \
+            -e REGION="$AWS_REGION" \
+            -e USERNAME="${{ secrets.LOADTEST_USER }}" \
+            -e PASSWORD="${{ secrets.LOADTEST_PASSWORD }}" &
+
+          k6_pid=$!
+          sleep 150
+          scripts/assert_scaled.sh "$(out ClusterName)" 2
+          wait "$k6_pid"

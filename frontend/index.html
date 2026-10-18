@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#ffffff">
+  <meta name="description" content="Socratic is a coding practice workspace with progressive AI hints and complexity feedback.">
+  <title>Socratic — learn to solve, not to copy</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <a class="brand" href="#/" aria-label="Socratic home"><span class="brand-mark">S</span><span>Socratic<span class="brand-dot">.</span><small>CODE WITH INTENTION</small></span></a>
+      <div class="side-label">WORKSPACE</div>
+      <nav class="side-nav" aria-label="Main navigation">
+        <a href="#/" data-nav="home"><span class="nav-icon">▦</span> Overview</a>
+        <a href="#/problems" data-nav="problems"><span class="nav-icon">⌘</span> Problem set <span class="nav-count">04</span></a>
+        <a href="#/leaderboard" data-nav="leaderboard"><span class="nav-icon">♧</span> Leaderboard</a>
+      </nav>
+      <div class="sidebar-bottom">
+        <div class="sidebar-tip"><span class="tip-spark">✦</span><b>Learn the pattern.</b><p>Small hints. Stronger thinking. Your own solution.</p></div>
+        <div class="profile-mini"><div class="avatar" id="avatar">S</div><div class="profile-copy"><b id="profileName">Guest learner</b><small id="profileMode">Local demo</small></div><button class="icon-button" id="accountBtn" title="Account options" aria-label="Account options">⋯</button></div>
+      </div>
+    </aside>
+    <main class="main-area">
+      <header class="topbar">
+        <button class="mobile-menu" id="menuBtn" aria-label="Toggle navigation">☰</button>
+        <div class="breadcrumbs"><span>Workspace</span><span class="crumb-slash">/</span><b id="pageCrumb">Overview</b></div>
+        <div class="top-actions"><span class="mode-badge"><span class="status-dot"></span><span id="modeLabel">DEMO MODE</span></span><button class="top-avatar" id="topAccount" aria-label="Open account">S</button></div>
+      </header>
+      <div id="view" class="page-content" aria-live="polite"></div>
+      <footer class="footer"><span>SOCRATIC <span class="brand-dot">●</span> BUILD BETTER THINKING</span><span id="footerStatus">Local demo · no code is sent to a server</span></footer>
+    </main>
+  </div>
+
+  <dialog id="auth" class="modal">
+    <form method="dialog" id="authForm" class="auth-form">
+      <button type="button" class="modal-close" id="authClose" aria-label="Close">×</button>
+      <div class="modal-mark">S</div><p class="eyebrow">YOUR LEARNING SPACE</p><h2 id="authTitle">Sign in</h2><p class="modal-intro">Save your progress and keep your practice in sync.</p>
+      <label>Email address<input name="email" type="email" required autocomplete="email" placeholder="you@example.com"></label>
+      <label>Password<input name="password" type="password" required minlength="10" autocomplete="current-password" placeholder="At least 10 characters"></label>
+      <label id="codeRow" hidden>Verification code<input name="code" inputmode="numeric" autocomplete="one-time-code"></label>
+      <p id="authMsg" role="alert"></p><button class="button button-primary button-wide" id="authGo">Continue <span>→</span></button>
+      <button class="text-button" type="button" id="authSwitch">Create an account</button>
+    </form>
+  </dialog>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
