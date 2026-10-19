@@ -18,12 +18,17 @@ HOSTILE = {
     "javascript": {
         "function fib(n){ while(true){} }": "TIME_LIMIT_EXCEEDED",
         "function fib(n){ return process.env; }": "RUNTIME_ERROR",
-        "function fib(n){ const a = new Array(100000000).fill(1); return a.length; }": "MEMORY_LIMIT_EXCEEDED",
+        "function fib(n){ const a = new Array(50000000).fill(1); return a.length; }":
+            "MEMORY_LIMIT_EXCEEDED",
     },
 }
 
 
 def main() -> int:
+    if LANGUAGE not in HOSTILE:
+        print(f"Unsupported LANGUAGE: {LANGUAGE!r}")
+        return 2
+
     failures = []
 
     # Verify all reference solutions first.
@@ -67,7 +72,8 @@ def main() -> int:
 
         if actual != expected:
             failures.append(
-                f"hostile {expected!r} -> {actual!r}: {code[:40]!r}"
+                f"hostile {expected!r} -> {actual!r}: "
+                f"{code[:40]!r}; result={result}"
             )
 
     if failures:
