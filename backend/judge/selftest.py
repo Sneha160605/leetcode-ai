@@ -18,7 +18,7 @@ HOSTILE = {
     "javascript": {
         "function fib(n){ while(true){} }": "TIME_LIMIT_EXCEEDED",
         "function fib(n){ return process.env; }": "RUNTIME_ERROR",
-        "function fib(n){ const a = new Array(50000000).fill(1); return a.length; }":
+        "function fib(n){ const a = []; while (true) a.push({x: a.length, y: 'memory'}); }":
             "MEMORY_LIMIT_EXCEEDED",
     },
 }
