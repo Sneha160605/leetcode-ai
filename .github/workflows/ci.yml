@@ -16,7 +16,9 @@ env:
 
 jobs:
   test:
+    name: CI Tests
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v4
 
@@ -50,8 +52,10 @@ jobs:
           CDK_DEFAULT_REGION: us-east-1
 
   build:
+    name: Build and Security Scan
     needs: test
     runs-on: ubuntu-latest
+
     strategy:
       matrix:
         lang: [python, javascript]
@@ -106,8 +110,33 @@ jobs:
           path: image-${{ matrix.lang }}.tgz
           retention-days: 1
 
+  cd-readiness:
+    name: CD Package Verification (No AWS Deployment)
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download judge image artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: image-*
+          path: images
+
+      - name: Verify Python and JavaScript packages
+        run: |
+          set -euo pipefail
+
+          test -s images/image-python/image-python.tgz
+          test -s images/image-javascript/image-javascript.tgz
+
+          echo "Python judge image artifact verified."
+          echo "JavaScript judge image artifact verified."
+          echo "CD package verification passed."
+          echo "AWS deployment was not executed."
+
   deploy:
-    # Keep deployment disabled until AWS permissions and resources are verified.
+    name: Deploy to AWS Staging
+    # Actual AWS deployment remains disabled until credentials and permissions are configured.
     if: github.ref == 'refs/heads/main' && vars.ENABLE_STAGING_DEPLOY == 'true'
     needs: build
     runs-on: ubuntu-latest
