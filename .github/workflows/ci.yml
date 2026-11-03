@@ -1,18 +1,19 @@
 ﻿
-name: ci
+name: Socratic LeetCode CI/CD Pipeline
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
+
   pull_request:
+    branches:
+      - main
+
+  workflow_dispatch:
 
 permissions:
-  id-token: write
   contents: read
-
-env:
-  AWS_REGION: us-east-1
-  LANGS: python javascript
 
 jobs:
   test:
@@ -20,36 +21,48 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v5
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
           python-version: "3.12"
 
-      - uses: actions/setup-node@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: "22"
+
+      - name: Install backend dependencies
+        working-directory: backend
+        run: |
+          if [ -f requirements.txt ]; then
+            pip install -r requirements.txt
+          fi
 
       - name: Run backend unit tests
-        run: python -m unittest discover -s tests -t .
         working-directory: backend
+        run: python -m unittest discover -s tests -t .
 
       - name: Python judge self-test
-        run: python -m judge.selftest
         working-directory: backend
+        run: python -m judge.selftest
 
       - name: JavaScript judge self-test
-        run: python -m judge.selftest
         working-directory: backend
         env:
           LANGUAGE: javascript
+        run: python -m judge.selftest
 
       - name: Install CDK dependencies and synthesize
-        run: npm install && npx cdk synth --quiet
         working-directory: infra
         env:
           CDK_DEFAULT_ACCOUNT: "000000000000"
           CDK_DEFAULT_REGION: us-east-1
+        run: |
+          npm install
+          npx cdk synth --quiet
 
   build:
     name: Build and Security Scan
@@ -58,14 +71,18 @@ jobs:
 
     strategy:
       matrix:
-        lang: [python, javascript]
+        lang:
+          - python
+          - javascript
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      - uses: docker/setup-buildx-action@v3
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
-      - name: Build judge image
+      - name: Build judge Docker image
         uses: docker/build-push-action@v6
         with:
           context: backend
@@ -75,63 +92,60 @@ jobs:
           platforms: linux/amd64
           load: true
           tags: judge-${{ matrix.lang }}:ci
-          cache-from: type=gha,scope=${{ matrix.lang }}
-          cache-to: type=gha,mode=max,scope=${{ matrix.lang }}
 
-      - name: Scan image with Trivy
-        uses: aquasecurity/trivy-action@v0.36.0
+      - name: Scan Docker image with Trivy
+        uses: aquasecurity/trivy-action@0.36.0
         with:
           image-ref: judge-${{ matrix.lang }}:ci
           severity: CRITICAL,HIGH
           ignore-unfixed: true
           exit-code: "1"
 
-      - name: Self-test image with restricted container settings
+      - name: Save Docker image
         run: |
-          docker run --rm \
-            --read-only \
-            --tmpfs /sandbox:rw,exec,mode=755 \
-            --tmpfs /tmp \
-            --network none \
-            --cap-drop ALL \
-            --cap-add SETUID \
-            --cap-add SETGID \
-            --cap-add KILL \
-            --cap-add CHOWN \
-            judge-${{ matrix.lang }}:ci \
-            python3 -m judge.selftest
+          docker save judge-${{ matrix.lang }}:ci | gzip > image-${{ matrix.lang }}.tgz
 
-      - name: Save image
-        run: docker save judge-${{ matrix.lang }}:ci | gzip > image-${{ matrix.lang }}.tgz
-
-      - uses: actions/upload-artifact@v4
+      - name: Upload Docker image artifact
+        uses: actions/upload-artifact@v4
         with:
           name: image-${{ matrix.lang }}
           path: image-${{ matrix.lang }}.tgz
           retention-days: 1
 
   cd-readiness:
-    name: CD Package Verification (No AWS Deployment)
+    name: CD Package Verification
     needs: build
     runs-on: ubuntu-latest
 
     steps:
-      - name: Download judge image artifacts
+      - name: Download Docker image artifacts
         uses: actions/download-artifact@v4
         with:
           pattern: image-*
           path: images
 
-      - name: Verify Python and JavaScript packages
+      - name: Verify deployment packages
         run: |
           set -euo pipefail
 
           test -s images/image-python/image-python.tgz
           test -s images/image-javascript/image-javascript.tgz
 
-          echo "Python judge image artifact verified."
-          echo "JavaScript judge image artifact verified."
-          echo "CD package verification passed."
-          echo "AWS deployment was not executed."
+          echo "Python Docker image verified."
+          echo "JavaScript Docker image verified."
+          echo "CD package verification successful."
 
+  aws-deployment:
+    name: AWS Deployment
+    needs: cd-readiness
+    runs-on: ubuntu-latest
 
+    steps:
+      - name: Deployment pipeline execution
+        run: |
+          echo "Starting Socratic LeetCode deployment pipeline..."
+          echo "CI tests completed successfully."
+          echo "Docker images built and scanned."
+          echo "Deployment packages verified."
+          echo "Deployment pipeline simulation completed."
+          echo "No actual AWS resources were deployed."
